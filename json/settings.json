@@ -1,0 +1,25 @@
+{
+    "settings": {
+        "WAIT_TIME": "1",
+        "MINIMUM_PURCHASE_CRYPTOPIA": "0.0005",
+        "MINIMUM_PURCHASE": "0.001",
+        "FIRST_SELL_TARGET_PERC": "30",
+        "SECOND_SELL_TARGET_PERC": "80",
+        "THIRD_SELL_TARGET_PERC": "400",
+        "FIRST_SELL_AMOUNT": "38.5",
+        "SECOND_SELL_AMOUNT": "28",
+        "THIRD_SELL_AMOUNT": "33.49999999",
+        "EMAIL_TO": "",
+        "EMAIL_FROM_NAME": "CryptopiaBot"
+    },
+    "secrets": {
+        "cryptopia": {
+            "key": "",
+            "secret": ""
+        },
+        "email": {
+            "username": "",
+            "password": ""
+        }
+    }
+}
