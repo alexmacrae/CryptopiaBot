@@ -93,6 +93,17 @@ class Cryptopia extends Exchange {
             $this->prices[$pair['Label']]['time'] = '';  // not available on Cryptopia
         }
     }
+    
+    public function getMarketData() {
+        $result = json_decode($this->apiCall("GetMarkets", array()), true);
+        if ($result['Success'] == "true") {
+            $json = $result['Data'];
+        } else {
+            throw new Exception("Can't get markets, Error: " . $result['Error']);
+        }
+        return $json;
+    }
+    
 
     // @todo add setBalance
 
@@ -268,6 +279,8 @@ class Cryptopia extends Exchange {
         }
         return $orders;
     }
+    
+  
 
 }
 

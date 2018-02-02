@@ -88,8 +88,8 @@ session_start();
     endif;
 
     $settings_path = $_SESSION['dir'] . "json/settings.json";
-
     $json = json_decode(file_get_contents($settings_path), true);
+    $_SESSION['ownedcoins_json'] = json_decode(file_get_contents($_SESSION['dir'] . "json/ownedcoins.json"), true);
 
     $settings = $json['settings'];
     $secrets = $json['secrets'];
@@ -97,14 +97,30 @@ session_start();
     $API_KEY = $secrets['cryptopia']['key'];
     $API_SECRET = $secrets['cryptopia']['secret'];
 
-    try {
+    $API_SUCCESS = False;
 
-        $_SESSION['ct'] = New Cryptopia($API_SECRET, $API_KEY);
-        $ct = $_SESSION['ct'];
-        sleep($_SESSION['sleep']);
-    } catch (Exception $e) {
-        echo '' . $e->getMessage() . PHP_EOL;
-    }
+    if ($API_KEY && $API_SECRET):
+
+        while ($API_SUCCESS === False):
+
+            try {
+                $_SESSION['ct'] = New Cryptopia($API_SECRET, $API_KEY);
+                $ct = $_SESSION['ct'];
+                sleep($_SESSION['sleep']);
+                $API_SUCCESS = True;
+                break;
+            } catch (Exception $e) {
+                echo '<span class="php-error" style="display: none;">' . $e->getMessage() . PHP_EOL . '</span>';
+                sleep($_SESSION['sleep']);
+            }
+
+        endwhile;
+
+    else:
+
+        echo 'ERROR: API key and secret not entered into settings: ' . $settings_path;
+
+    endif;
     ?>
 
     <body>
@@ -131,20 +147,60 @@ session_start();
                     </li>
                 </ul>
 
-                <form class="form-inline my-2 my-lg-0">
-                    <p style="text-align: right">
-                        BTC total: <?php
-                        echo number_format($ct->GetCurrencyBalance("BTC")['Total'], 8);
-                        sleep($_SESSION['sleep']);
-                        ?><br/>
-                        BTC available: <?php echo number_format($ct->GetCurrencyBalance("BTC")['Available'], 8) ?>
-                    </p>
-                </form>
-
             </div>
+            <?php
+            // Get total BTC values
+
+            $currency = 'AUD';
+
+            $marketdata = $ct->getMarketData();
+
+            sleep($_SESSION['sleep']);
+
+            $results = $ct->getBalance();
+
+            sleep($_SESSION['sleep']);
+
+            $btc_balance = 0;
+
+            $btc_total_value = 0;
+
+            for ($i = 0; $i < count($results); $i++):
+
+                if ($results[$i]['Symbol'] == 'BTC'):
+                    $btc_balance = $results[$i]['Total'];
+                    continue;
+                endif;
+
+                if ($results[$i]['Total'] > 0):
+
+                    foreach ($marketdata as $item):
+
+                        $symbol = explode('/', $item['Label'])[0];
+                        $market = explode('/', $item['Label'])[1];
+
+                        if ($market != 'BTC'):
+                            continue;
+                        endif;
+
+                        if ($symbol == $results[$i]['Symbol']):
+                            $btc_total_value += $results[$i]['Total'] * $item['LastPrice'];
+                            break;
+                        endif;
+
+                    endforeach;
+                endif;
+            endfor;
+            ?>
+            <form class="form-inline my-2 my-lg-0">
+                <p style="text-align: right">
+                    BTC available and in trades: <?php echo number_format($btc_total_value, 8) ?><br/>
+                    Total BTC value: <?php echo number_format($btc_total_value + $btc_balance, 8); ?><br/>
+                    Total AUD value: $<?php echo number_format(($btc_total_value + $btc_balance) / file_get_contents("https://blockchain.info/tobtc?currency=$currency&value=1"), 2); ?>
+                </p>
+            </form>
 
         </nav>
-
 
         <div id="main">
 

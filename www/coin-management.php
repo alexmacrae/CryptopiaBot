@@ -1,7 +1,7 @@
 <?php
 include_once 'header.php';
 
-$ownedcoins_json = json_decode(file_get_contents($_SESSION['dir'] . "json/ownedcoins.json"), true);
+
 $_SESSION['wishlist_json'] = json_decode(file_get_contents($_SESSION['dir'] . "json/wishlist.json"), true);
 $_SESSION['blacklist_json'] = json_decode(file_get_contents($_SESSION['dir'] . "json/blacklist.json"), true);
 ?>
@@ -31,7 +31,7 @@ $_SESSION['blacklist_json'] = json_decode(file_get_contents($_SESSION['dir'] . "
                 <tbody>
 
                     <?php
-                    $results = $ct->getBalance();
+//                    $results = $ct->getBalance(); // << already called in header for total btc value
 
                     $ignore_keys = array('Unconfirmed', 'PendingWithdraw', 'Address', 'StatusMessage', 'BaseAddress');
 
@@ -42,7 +42,7 @@ $_SESSION['blacklist_json'] = json_decode(file_get_contents($_SESSION['dir'] . "
 
                             $hodl = 'false';
 
-                            foreach ($ownedcoins_json as $key => $v):
+                            foreach ($_SESSION['ownedcoins_json'] as $key => $v):
                                 $json_coin = $key;
 
                                 if ($json_coin == $results[$i]['Symbol']):

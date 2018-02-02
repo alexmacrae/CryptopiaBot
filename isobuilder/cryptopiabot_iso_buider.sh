@@ -161,23 +161,12 @@ chroot sdcard apt-get -y install psmisc # contains `killall` command
 chroot sdcard apt-get -y install dos2unix # converts windows files to unix
 chroot sdcard apt-get clean
 chroot sdcard apt-get -y install build-essential python-dev python-pip cython python-smbus python-numpy python-rpi.gpio python-serial
-chroot sdcard apt-get -y install python-configparser python-psutil python-scipy git portaudio19-dev alsa-utils libportaudio2 libffi-dev
+chroot sdcard apt-get -y install python-configparser python-psutil python-scipy git libffi-dev
 chroot sdcard apt-get clean
 chroot sdcard apt-get autoremove -y
-chroot sdcard pip install pyaudio cffi sounddevice pyalsaaudio wifi
-chroot sdcard sh -c "cd /root ; git clone https://github.com/gesellkammer/rtmidi2 ; cd rtmidi2 ; python setup.py install ; cd .. ; rm -rf rtmidi2"
-chroot sdcard sh -c "cd /root ; git clone https://github.com/dbrgn/RPLCD ; cd RPLCD ; python setup.py install ; cd .. ; rm -rf RPLCD" # WARNING: version used 0.9.0. Latest is 1.0.0
-chroot sdcard sh -c "cd /root ; git clone https://gitorious.org/pyosc/devel.git ; cd devel ; python setup.py install ; cd .. ; rm -rf devel" # OSC support
-chroot sdcard sh -c "cd /root ; git clone https://github.com/proxypoke/wpa_config.git ; cd wpa_config ; python setup.py install ; cd .. ; rm -rf wpa_config"
 
 # Allowing root to log into $release with password... "
 sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' sdcard/etc/ssh/sshd_config
-
-## Start wpa_supplicant
-#chroot sdcard sh -c "wpa_supplicant -B -i wlan0 -c /boot/networking/wireless_networks.conf" # only need if wpa_supplicant.conf lives somewhere other than the default. eg /boot/networking/wireless_networks.conf
-#chroot sdcard sh -c "wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf" # only need if wpa_supplicant.conf lives somewhere other than the default. eg /boot/networking/wireless_networks.conf
-#chroot sdcard systemctl enable wpa_supplicant # line may not be needed as package wpasupplicant seems to start service upon reboot
-#chroot sdcard systemctl enable dhcpcd # dhcpcd5 enables itself after install
 
 #echo "timeout 10;" >> sdcard/etc/dhcp/dhclient.conf
 #echo "retry 1;" >> sdcard/etc/dhcp/dhclient.conf
@@ -199,14 +188,6 @@ chmod 777 sdcard/root/CryptopiaBot/json/wishlist.json
 chmod 777 sdcard/root/CryptopiaBot/json/blacklist.json
 chmod 777 sdcard/root/CryptopiaBot/json/ownedcoins.json
 
-cat <<EOF > sdcard/etc/wpa_config/wpa_supplicant.conf.head
-ctrl_interface=DIR=/var/run/wpa_supplicant
-update_config=1
-EOF
-
-cat <<EOF > sdcard/etc/wpa_config/wpa_supplicant.conf.tail
-
-EOF
 
 cat <<EOF > sdcard/etc/systemd/system/cryptopiabot.service
 [Unit]
