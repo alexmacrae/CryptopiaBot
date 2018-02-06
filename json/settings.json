@@ -10,7 +10,8 @@
         "SECOND_SELL_AMOUNT": "28",
         "THIRD_SELL_AMOUNT": "33.49999999",
         "EMAIL_TO": "",
-        "EMAIL_FROM_NAME": "CryptopiaBot"
+        "EMAIL_FROM_NAME": "CryptopiaBot",
+        "DEFAULT_BUY_PRICE": "low"
     },
     "secrets": {
         "cryptopia": {

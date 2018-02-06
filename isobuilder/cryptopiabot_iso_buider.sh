@@ -38,10 +38,7 @@ n
 
 +$(($raspbian_size))M
 p
-n
-p
-
-
+w
 EOF
 
 
@@ -85,7 +82,7 @@ chroot sdcard locale-gen LANG="en_GB.UTF-8"
 chroot sdcard dpkg-reconfigure -f noninteractive locales
 
 cat <<EOF > sdcard/boot/cmdline.txt
-root=/dev/mmcblk0p2 ro rootwait console=tty1 selinux=0 plymouth.enable=0 smsc95xx.turbo_mode=N dwc_otg.lpm_enable=0 elevator=noop init=/bin/systemd
+root=/dev/mmcblk0p2 rw rootwait console=tty1 selinux=0 plymouth.enable=0 smsc95xx.turbo_mode=N dwc_otg.lpm_enable=0 elevator=noop init=/bin/systemd
 EOF
 # removed: bcm2708.uart_clock=3000000, this hack was only useful for Linux kernel <= 4.4
 # http://k3a.me/how-to-make-raspberrypi-truly-read-only-reliable-and-trouble-free/ @ 4.4 Disable filesystem check and swap
@@ -164,6 +161,8 @@ chroot sdcard apt-get -y install build-essential python-dev python-pip cython py
 chroot sdcard apt-get -y install python-configparser python-psutil python-scipy git libffi-dev
 chroot sdcard apt-get clean
 chroot sdcard apt-get autoremove -y
+chroot sdcard pip wifi
+chroot sdcard sh -c "cd /root ; git clone https://github.com/proxypoke/wpa_config.git ; cd wpa_config ; python setup.py install ; cd .. ; rm -rf wpa_config"
 
 # Allowing root to log into $release with password... "
 sed -i 's/PermitRootLogin without-password/PermitRootLogin yes/' sdcard/etc/ssh/sshd_config
@@ -179,7 +178,7 @@ chroot sdcard sh -c "cd /root ; git clone https://github.com/alexmacrae/Cryptopi
 cat <<EOF > sdcard/root/CryptopiaBot/cryptopiabot.sh
 #!/bin/sh
 date -s "Jan 1 11:11:11 UTC 2018"
-python /root/CryptopiaBot/cryptopia.py
+python /root/CryptopiaBot/cryptopiabot.py
 EOF
 
 chmod 777 sdcard/root/CryptopiaBot/cryptopiabot.sh
@@ -188,6 +187,20 @@ chmod 777 sdcard/root/CryptopiaBot/json/wishlist.json
 chmod 777 sdcard/root/CryptopiaBot/json/blacklist.json
 chmod 777 sdcard/root/CryptopiaBot/json/ownedcoins.json
 
+rm -r /var/www/html
+mv /root/CryptopiaBot/www /var
+
+mv /root/CryptopiaBot/setup.ini /boot/setup.ini
+
+
+cat <<EOF > sdcard/etc/wpa_config/wpa_supplicant.conf.head
+ctrl_interface=DIR=/var/run/wpa_supplicant
+update_config=1
+EOF
+
+cat <<EOF > sdcard/etc/wpa_config/wpa_supplicant.conf.tail
+
+EOF
 
 cat <<EOF > sdcard/etc/systemd/system/cryptopiabot.service
 [Unit]
@@ -233,7 +246,7 @@ ln -nsf /run/resolvconf/resolv.conf sdcard/etc/resolv.conf     # to prevent DNS 
 sync
 
 umount -v sdcard/boot
-umount -v sdcard
+umount -v sdcard # may fail here due to apache2 running. Can `killall apache2` - but best to find a better solution.
 
 kpartx -dv $image_name
 

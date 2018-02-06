@@ -4,6 +4,36 @@ import random
 import json
 import os
 import smtplib
+import subprocess
+import platform
+from modules import network
+import configparser
+
+IS_DEBIAN = platform.linux_distribution()[0].lower() == 'debian'  # Determine if running on RPi (True / False)
+
+if IS_DEBIAN:
+
+    w = network.Wifi()
+
+    CONFIG_FILE_PATH = '/boot/setup.ini'
+    config = configparser.ConfigParser(allow_no_value=True)
+    config.optionxform = str  # allows case sensitivity
+
+    def get_option_by_name(option_name):
+        if config.read(CONFIG_FILE_PATH):
+            for section in config.sections():
+                for name, value in config.items(section):
+                    if name == option_name:
+                        return value
+
+    ssid = get_option_by_name('ssid')
+    psk = get_option_by_name('psk')
+
+    if ssid != '' and psk != '':
+        if w.exists(ssid) == False:
+            print 'Found wireless network credentials in %s' % CONFIG_FILE_PATH
+            w.save(ssid, psk)
+            subprocess.call(['reboot'])
 
 # TODO LIST:
 # > Web GUI:
@@ -43,6 +73,8 @@ WAIT_TIME = 60.0 * float(settings['WAIT_TIME'])  # time to wait between loops
 MINIMUM_PURCHASE_CRYPTOPIA = float(settings['MINIMUM_PURCHASE_CRYPTOPIA'])  # minimum required by Cryptopia to make a trade.
 MINIMUM_PURCHASE = float(settings['MINIMUM_PURCHASE'])  # minimum required to invest in a coin. 0.0005 is the minimum for Cryptopia - but let's use double that.
 MINIMUM_PURCHASE = MINIMUM_PURCHASE * 1.003  # Cryptopia has a 0.2% trading fee. Let's make it 0.3% just in case.
+
+DEFAULT_BUY_PRICE = settings['DEFAULT_BUY_PRICE']  # Either market price or lowest price
 
 FIRST_SELL_TARGET_PERC = float(settings['FIRST_SELL_TARGET_PERC'])  # percentage increase target to trigger sell
 SECOND_SELL_TARGET_PERC = float(settings['SECOND_SELL_TARGET_PERC'])  # percentage increase target to trigger sell - this is in case of a big spike
@@ -327,7 +359,13 @@ class CryptopiaBot:
 
         coindata = self.api_wrapper.get_market(coin + '_BTC')[0]
 
-        return coindata['Low']  # Buy at the lowest
+        if DEFAULT_BUY_PRICE == 'low':
+
+            return coindata['Low']  # Buy at the lowest
+
+        elif DEFAULT_BUY_PRICE == 'market':
+
+            return coindata['AskPrice']  # Buy immediately at market price
 
     def get_original_buy_price(self, coin):
         """Get the price the coin was originally bought at. This will determine what prices to set sell trades at."""
@@ -513,11 +551,11 @@ class CryptopiaBot:
         """Check that the randomly selected coin fits some criteria"""
         print " Checking to see if %s satisfies requirements" % coin
 
-        for i in xrange(len(jsondata['coins'])):
-            coin_name = jsondata['coins'][i]['Symbol']
-            if jsondata['coins'][i]['Symbol'] == coin:
-                print '   %s exists in JSON >> Find a new coin...' % coin_name
-                return True
+
+        if jsondata.has_key(coin):
+
+            print '   %s exists in JSON >> Find a new coin...' % coin
+            return True
 
         print '   - Does not exist in JSON >> Proceed...'
 
@@ -525,12 +563,10 @@ class CryptopiaBot:
 
         blacklist = json.load(open(BLACKLIST_PATH))
 
-        for i in xrange(len(blacklist)):
+        if blacklist.has_key(coin):
+            print '   %s is blacklisted >> Find a new coin...' % coin
 
-            if coin == blacklist['coins'][i]['Symbol']:
-                print '   %s is blacklisted >> Find a new coin...' % coin
-
-                return True
+            return True
 
         print '   - Does not exist in blacklist >> Proceed...'
 
