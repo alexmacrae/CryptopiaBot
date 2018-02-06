@@ -161,7 +161,7 @@ chroot sdcard apt-get -y install build-essential python-dev python-pip cython py
 chroot sdcard apt-get -y install python-configparser python-psutil python-scipy git libffi-dev
 chroot sdcard apt-get clean
 chroot sdcard apt-get autoremove -y
-chroot sdcard pip wifi
+chroot sdcard pip install wifi
 chroot sdcard sh -c "cd /root ; git clone https://github.com/proxypoke/wpa_config.git ; cd wpa_config ; python setup.py install ; cd .. ; rm -rf wpa_config"
 
 # Allowing root to log into $release with password... "
@@ -187,8 +187,9 @@ chmod 777 sdcard/root/CryptopiaBot/json/wishlist.json
 chmod 777 sdcard/root/CryptopiaBot/json/blacklist.json
 chmod 777 sdcard/root/CryptopiaBot/json/ownedcoins.json
 
-rm -r /var/www/html
-mv /root/CryptopiaBot/www /var
+# failing here because /var/www doesn't exist yet - apache needs to create it on first run
+#rm -r /var/www/html
+#mv /root/CryptopiaBot/www /var
 
 mv /root/CryptopiaBot/setup.ini /boot/setup.ini
 

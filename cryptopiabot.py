@@ -1,4 +1,6 @@
 from modules.cryptopia_api import Api
+from modules import network
+from modules import firstrun
 import time
 import random
 import json
@@ -6,8 +8,9 @@ import os
 import smtplib
 import subprocess
 import platform
-from modules import network
 import configparser
+
+fr = firstrun.FirstRun().go()
 
 IS_DEBIAN = platform.linux_distribution()[0].lower() == 'debian'  # Determine if running on RPi (True / False)
 
